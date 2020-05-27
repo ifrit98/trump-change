@@ -33,6 +33,13 @@ max_len = 120
 
 corpus = text = train['text'].values.astype(str)
 
+s = ''
+for l in corpus:
+    # if type(l) != str: continue
+    s += l
+
+print(s)
+
 corpus_extended = []
 for line in corpus:
     if len(line) > max_len:
@@ -99,7 +106,7 @@ plt.legend()
 plt.show()
 
 
-# Generate text by sampling from trained model
+# Generate text by sampling from trained model (on words, not characters)
 seed_text = "Help me Obi Wan Kenobi, you're my only hope"
 next_words = 100
   
@@ -116,18 +123,56 @@ for _ in range(next_words):
 print(seed_text)
 
 
+##############################################################################
+##############################################################################
+
+
 # TODO: Follow tensorflow tutorial?
 # Ref:  https://www.tensorflow.org/tutorials/text/text_generation
 import tensorflow as tf
 
 import numpy as np
+import pandas as pd
 import os
 import time
 
-path_to_file = tf.keras.utils.get_file('shakespeare.txt', 'https://storage.googleapis.com/download.tensorflow.org/data/shakespeare.txt')
 
-# Read, then decode for py2 compat.
-text = open(path_to_file, 'rb').read().decode(encoding='utf-8')
+ENCODING = "ISO-8859-1"
+
+filepath = '/media/jason/Games/ml-data/trump-change/data/trump-tweets.csv'# 'data/trump-tweets.csv'
+
+train = pd.read_csv(filepath,  encoding=ENCODING)
+corpus = text = train['text'].values.astype(str)
+
+# TODO: Remove special characters, URLs, etc to shrink vocab
+chars_to_rm =  np.array(['\x80', '\x81', '\x82', '\x83', '\x84', '\x85', '\x86', '\x87',
+       '\x88', '\x89', '\x8a', '\x8b', '\x8c', '\x8d', '\x8e', '\x8f',
+       '\x90', '\x91', '\x92', '\x93', '\x94', '\x95', '\x96', '\x97',
+       '\x98', '\x99', '\x9a', '\x9b', '\x9c', '\x9d', '\x9e', '\x9f',
+       '\xa0', '¡', '¢', '£', '¤', '¥', '¦', '§', '¨', '©', 'ª', '«', '¬',
+       '\xad', '®', '¯', '°', '±', '²', '³', '´', 'µ', '¶', '·', '¸', '¹',
+       'º', '»', '¼', '½', '¾', '¿', 'Â', 'Ã', 'Ä', 'Å', 'É', 'Ê', '×',
+       'Ø', 'Ù', 'Ú', 'Û', 'à', 'á', 'â', 'ã', 'ä', 'å', 'æ', 'ç', 'è',
+       'é', 'ê', 'ë', 'ì', 'í', 'ï', 'ð', 'ô'])
+
+
+s = ''
+for l in corpus:
+    # if type(l) != str: continue
+    s += (l + '\n')
+print(s)
+
+# Remove special chars (replace with <OOV>?)
+s_clean = ''
+for c in s:
+    if c not in chars_to_rm:
+        s_clean += c
+print(s_clean)
+
+# TODO: Remove URLs with regex
+
+text = s_clean
+
 # length of text is the number of characters in it
 print ('Length of text: {} characters'.format(len(text)))
 
@@ -145,7 +190,7 @@ char2idx = {u:i for i, u in enumerate(vocab)}
 idx2char = np.array(vocab)
 
 text_as_int = np.array([char2idx[c] for c in text])
- 
+
 # Now we have an integer representation for each character. 
 # Notice that we mapped the character as indexes from 0 to len(unique).
 print('{')
@@ -159,7 +204,7 @@ print ('{} ---- characters mapped to int ---- > {}'.format(repr(text[:13]), text
 
 # The maximum length sentence we want for a single input in characters
 seq_length = 100
-examples_per_epoch = len(text)//(seq_length+1)
+examples_per_epoch = len(text) // (seq_length + 1)
 
 # Create training examples / targets
 char_dataset = tf.data.Dataset.from_tensor_slices(text_as_int)
@@ -203,8 +248,7 @@ BUFFER_SIZE = 10000
 
 dataset = dataset.shuffle(BUFFER_SIZE).batch(BATCH_SIZE, drop_remainder=True)
 
-dataset
-
+print(dataset)
 
 
 # Build model
@@ -216,7 +260,7 @@ vocab_size = len(vocab)
 embedding_dim = 256
 
 # Number of RNN units
-rnn_units = 1024
+rnn_units = 512
 
 
 def build_model(vocab_size, embedding_dim, rnn_units, batch_size):
@@ -264,7 +308,7 @@ print("Next Char Predictions: \n", repr("".join(idx2char[sampled_indices ])))
 def loss_fn(labels, logits):
     return tf.keras.losses.sparse_categorical_crossentropy(labels, logits, from_logits=True)
 
-example_batch_loss  = loss(target_example_batch, example_batch_predictions)
+example_batch_loss  = loss_fn(target_example_batch, example_batch_predictions)
 print("Prediction shape: ", example_batch_predictions.shape, " # (batch_size, sequence_length, vocab_size)")
 print("scalar_loss:      ", example_batch_loss.numpy().mean())
 
@@ -274,7 +318,7 @@ model.compile(optimizer='adam', loss=loss_fn)
 # Configure checkpoints
 
 # Directory where the checkpoints will be saved
-checkpoint_dir = './training_checkpoints'
+checkpoint_dir = './trump_training_checkpoints'
 # Name of the checkpoint files
 checkpoint_prefix = os.path.join(checkpoint_dir, "ckpt_{epoch}")
 
@@ -283,10 +327,10 @@ checkpoint_callback=tf.keras.callbacks.ModelCheckpoint(
     save_weights_only=True)
 
 
-
 EPOCHS=10
 
 history = model.fit(dataset, epochs=EPOCHS, callbacks=[checkpoint_callback])
+
 
 
 tf.train.latest_checkpoint(checkpoint_dir)
