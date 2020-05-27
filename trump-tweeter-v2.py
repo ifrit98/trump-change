@@ -289,7 +289,7 @@ def generate_text(model, start_string, num_generate=256):
 
   return (start_string + ''.join(text_generated))
 
-
-print(generate_text(model, start_string=u"China "))
+for _ in range(10):
+    print(generate_text(model, start_string=u"China "))
 
 
