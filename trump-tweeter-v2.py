@@ -1,5 +1,17 @@
+# -*- coding: ISO-8859-1 -*-
 
-# TODO: Follow tensorflow tutorial?
+
+# TODO: Clean data further
+# - remove URLs
+# - remove other special characters
+# - massage formatting to seem more twitter natural
+
+
+
+# import sys
+# sys.setdefaultencoding("ISO-8859-1")
+
+
 # Ref:  https://www.tensorflow.org/tutorials/text/text_generation
 import tensorflow as tf
 from tensorflow.keras.preprocessing.text import Tokenizer
@@ -16,39 +28,66 @@ import os
 import time
 
 
-ENCODING = "ISO-8859-1"
+ENCODING = "ISO-8859-2"
 
-filepath = '/media/jason/Games/ml-data/trump-change/data/trump-tweets.csv'# 'data/trump-tweets.csv'
+# filepath = '/media/jason/Games/ml-data/trump-change/data/trump-tweets.csv' # 'data/trump-tweets.csv'
+filepath = '/media/jason/Games/ml-data/trump-change/data/trump-tweets-no-retweets.json' #csv'
 
-train = pd.read_csv(filepath,  encoding=ENCODING)
-corpus = text = train['text'].values.astype(str)
+# df = train = pd.read_csv(filepath,  encoding=ENCODING)
+df = train = pd.read_json(filepath)
+corpus = text = train['text'].values # .astype(str) # conversion causing encoding issues?
 
 # TODO: Remove special characters, URLs, etc to shrink vocab
-chars_to_rm =  np.array(['\x80', '\x81', '\x82', '\x83', '\x84', '\x85', '\x86', '\x87',
-       '\x88', '\x89', '\x8a', '\x8b', '\x8c', '\x8d', '\x8e', '\x8f',
-       '\x90', '\x91', '\x92', '\x93', '\x94', '\x95', '\x96', '\x97',
-       '\x98', '\x99', '\x9a', '\x9b', '\x9c', '\x9d', '\x9e', '\x9f',
-       '\xa0', '¡', '¢', '£', '¤', '¥', '¦', '§', '¨', '©', 'ª', '«', '¬',
-       '\xad', '®', '¯', '°', '±', '²', '³', '´', 'µ', '¶', '·', '¸', '¹',
-       'º', '»', '¼', '½', '¾', '¿', 'Â', 'Ã', 'Ä', 'Å', 'É', 'Ê', '×',
-       'Ø', 'Ù', 'Ú', 'Û', 'à', 'á', 'â', 'ã', 'ä', 'å', 'æ', 'ç', 'è',
-       'é', 'ê', 'ë', 'ì', 'í', 'ï', 'ð', 'ô'])
+# chars_to_rm =  np.array(['\x80', '\x81', '\x82', '\x83', '\x84', '\x85', '\x86', '\x87',
+#        '\x88', '\x89', '\x8a', '\x8b', '\x8c', '\x8d', '\x8e', '\x8f',
+#        '\x90', '\x91', '\x92', '\x93', '\x94', '\x95', '\x96', '\x97',
+#        '\x98', '\x99', '\x9a', '\x9b', '\x9c', '\x9d', '\x9e', '\x9f',
+#        '\xa0', '¡', '¢', '£', '¤', '¥', '¦', '§', '¨', '©', 'ª', '«', '¬',
+#        '\xad', '®', '¯', '°', '±', '²', '³', '´', 'µ', '¶', '·', '¸', '¹',
+#        'º', '»', '¼', '½', '¾', '¿', 'Â', 'Ã', 'Ä', 'Å', 'É', 'Ê', '×',
+#        'Ø', 'Ù', 'Ú', 'Û', 'à', 'á', 'â', 'ã', 'ä', 'å', 'æ', 'ç', 'è',
+#        'é', 'ê', 'ë', 'ì', 'í', 'ï', 'ð', 'ô'])
+
+chars_to_rm = np.array(['、', '。', '々', '《', '「', '」', '【', '】', 'い', 'う', 'え', 'お', 'か',
+       'が', 'き', 'ぎ', 'く', 'け', 'こ', 'ご', 'さ', 'し', 'じ', 'す', 'そ', 'た',
+       'だ', 'っ', 'つ', 'て', 'で', 'と', 'な', 'に', 'の', 'は', 'へ', 'ま', 'み',
+       'め', 'も', 'よ', 'ら', 'り', 'る', 'を', 'ア', 'ゴ', 'サ', 'ジ', 'セ', 'ッ',
+       'ト', 'ニ', 'フ', 'プ', 'ミ', 'メ', 'ラ', 'ル', 'ン', 'ー', '上', '下', '世',
+       '両', '人', '代', '令', '以', '会', '倍', '共', '典', '出', '初', '励', '勢',
+       '北', '千', '史', '同', '后', '和', '問', '国', '夕', '大', '天', '夫', '安',
+       '対', '居', '席', '式', '応', '情', '投', '揃', '揺', '新', '日', '昨', '時',
+       '更', '朝', '本', '様', '歓', '海', '済', '激', '理', '界', '皇', '盟', '相',
+       '稿', '米', '経', '統', '続', '総', '考', '脳', '臨', '自', '至', '艦', '葉',
+       '衛', '見', '訪', '話', '課', '談', '護', '賓', '軍', '迎', '過', '間', '阪',
+       '陛', '隊', '領', '題', '食', '首', '鮮', '고', '국', '는', '대', '라', '렛',
+       '리', '며', '모', '미', '바', '받', '보', '북', '브', '상', '서', '소', '습',
+       '에', '오', '울', '을', '의', '쟁', '전', '정', '초', '측', '핑', '하', '한',
+       '화', '\u200b', '\u200c', '\u200d', '\u200e', '\u200f', '–', '—',
+       '―', '‘', '’', '“', '”', '•', '…', '\u202f', '′', '‼', '\u2060',
+       '\u2063', '\u2066', '\u2069', '\U0001f928', '\U0001f92f',
+       '\U0001f973', '\U0001f9d0', '\U0010fc00'])
+
+# from string import hexdigits, punctuation
+# chars_to_keep = np.array(list(hexdigits + punctuation))
 
 
 s = ''
 for l in corpus:
     # if type(l) != str: continue
+    # if l[:4] == 'http': continue
     s += (l + '\n')
-# print(s[:256])
+print(s[:280])
+
+# TODO: Remove URLs with regex?
+
 
 # Remove special chars (replace with <OOV>?)
 s_clean = ''
 for c in s:
     if c not in chars_to_rm:
         s_clean += c
-# print(s_clean[:256])
+print(s_clean[:280])
 
-# TODO: Remove URLs with regex
 
 text = s_clean
 
@@ -82,7 +121,7 @@ print('  ...\n}')
 print ('{} ---- characters mapped to int ---- > {}'.format(repr(text[:13]), text_as_int[:13]))
 
 # The maximum length sentence we want for a single input in characters
-seq_length = 100
+seq_length = 144 # max([len(x) for x in corpus])
 examples_per_epoch = len(text) // (seq_length + 1)
 
 # Create training examples / targets
@@ -102,8 +141,8 @@ def split_input_target(chunk):
     target_text = chunk[1:]
     return input_text, target_text
 
-dataset = sequences.map(split_input_target)
 
+dataset = sequences.map(split_input_target)
 
 # Print the first examples input and target values
 for input_example, target_example in  dataset.take(1):
@@ -136,7 +175,7 @@ print(dataset)
 vocab_size = len(vocab)
 
 # The embedding dimension
-embedding_dim = 256
+embedding_dim = 300
 
 # Number of RNN units
 rnn_units = 512
@@ -154,7 +193,12 @@ def build_model(vocab_size, embedding_dim, rnn_units, batch_size):
                         return_sequences=True,
                         stateful=True,
                         recurrent_initializer='glorot_uniform'),
-    tf.keras.layers.Dense(vocab_size*2),
+    tf.keras.layers.GRU(rnn_units,
+                        return_sequences=True,
+                        stateful=True,
+                        recurrent_initializer='glorot_uniform'),
+    # tf.keras.layers.Dense(rnn_units // 2, activation='relu'),
+    tf.keras.layers.Dense(vocab_size*2, activation='relu'),
     tf.keras.layers.Dense(vocab_size)
   ])
   return model
@@ -204,23 +248,33 @@ model.compile(optimizer='adam', loss=loss_fn)
 # Configure checkpoints
 
 # Directory where the checkpoints will be saved
-checkpoint_dir = './trump_training_checkpoints'
+checkpoint_dir = './trump_training_checkpoints/no_retweets'
 # Name of the checkpoint files
 checkpoint_prefix = os.path.join(checkpoint_dir, "ckpt_{epoch}")
 
-checkpoint_callback=tf.keras.callbacks.ModelCheckpoint(
+checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
     filepath=checkpoint_prefix,
     save_weights_only=True)
 
+reduce_lr_callback = tf.keras.callbacks.ReduceLROnPlateau(
+    monitor='loss', factor=0.1, patience=10, verbose=0, mode='auto',
+    min_delta=0.0005, cooldown=0, min_lr=0
+)
 
-EPOCHS = 250
+
+EPOCHS = 500
 
 # TODO: 
 #  Callbacks: learning rate scheduler, early stopping
 #  learning rate range test (use R package somehow?)
 
-history = model.fit(dataset, epochs=EPOCHS, callbacks=[checkpoint_callback])
+history = model.fit(dataset, epochs=EPOCHS, callbacks=[checkpoint_callback, reduce_lr_callback])
 
+# Save history object, can't use pickle: .Rlock object error
+import pickle
+hist_file = os.getcwd() + '/history/history-{}'.format(EPOCHS) + 'x2'
+with open(hist_file, 'wb') as f:
+    pickle.dump(dict(history.history), f)
 
 # Plot loss and accuracy from hist
 import matplotlib.pyplot as plt
@@ -237,17 +291,27 @@ plt.legend()
 plt.savefig('training_loss.png')
 plt.show()
 
+# If you want preds on CPU only
+GENERATE_ON_CPU = True
+
+if GENERATE_ON_CPU:
+    import os
+    os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
+    os.environ["CUDA_VISIBLE_DEVICES"] = ""
+
+    # Check to see if GPU is not visible
+    from tensorflow.python.client import device_lib
+    print(device_lib.list_local_devices())
 
 
+checkpoint_dir = '/media/jason/Games/ml-data/trump-change/trump_training_checkpoints/no_retweets'
 
-tf.train.latest_checkpoint(checkpoint_dir)
+tf.train.latest_checkpoint(checkpoint_dir) # './trump_training_checkpoints'
 
 # Reload model
 
 model = build_model(vocab_size, embedding_dim, rnn_units, batch_size=1)
-
 model.load_weights(tf.train.latest_checkpoint(checkpoint_dir))
-
 model.build(tf.TensorShape([1, None]))
 
 model.summary()
@@ -289,7 +353,18 @@ def generate_text(model, start_string, num_generate=256):
 
   return (start_string + ''.join(text_generated))
 
-for _ in range(10):
-    print(generate_text(model, start_string=u"China "))
+
+no_generate = 1000
+
+tweets = [
+    generate_text(model, start_string=u"China ") + '\n' for _ in range(no_generate)
+]
 
 
+
+# TODO: Dump generated text to csv or txt file
+outfile = 'trump-tweets-1000.txt'
+import csv
+with open(outfile, 'w') as f:
+    writer = csv.writer(f, dialect='unix')
+    writer.writerows([tweets])
