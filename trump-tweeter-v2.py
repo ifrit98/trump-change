@@ -71,14 +71,34 @@ chars_to_rm = np.array(['、', '。', '々', '《', '「', '」', '【', '】', 
 # chars_to_keep = np.array(list(hexdigits + punctuation))
 
 
+
+# regex = '!"#$%&\'()*+,-./@:;<=>[\\]^_`{|}~'
+# regex = 'https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)'
+# regex = '[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)'
+# regex = '/\b((?:[a-z][\w-]+:(?:\/{1,3}|[a-z0-9%])|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}\/)(?:[^\s()<>]+|\(([^\s()<>]+|(\([^\s()<>]+\)))*\))+(?:\(([^\s()<>]+|(\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:'".,<>?«»“”‘’]))/i'
+# regex = "(?i)\\b((?:[a-z][\\w-]+:(?:\\/{1,3}|[a-z0-9%])|www\\d{0,3}[.]|[a-z0-9.\\-]" \  # Gruber regex for HTML
+#       + "+[.][a-z]{2,4}\\/)(?:[^\\s()<>]+|\\(([^\\s()<>]+|(\\([^\\s()<>]+\\)))*\\))" \
+#       + "+(?:\\(([^\\s()<>]+|(\\([^\\s()<>]+\\)))*\\)|[^\\s`!()\\[\\]{};:'\".,<>?«»“”‘’]))"
+# regex = '%^(?:(?:https?|ftp)://)(?:\S+(?::\S*)?@|\d{1,3}(?:\.\d{1,3}){3}|(?:(?:[a-z\d\x{00a1}-\x{ffff}]+-?)*[a-z\d\x{00a1}-\x{ffff}]+)(?:\.(?:[a-z\d\x{00a1}-\x{ffff}]+-?)*[a-z\d\x{00a1}-\x{ffff}]+)*(?:\.[a-z\x{00a1}-\x{ffff}]{2,6}))(?::\d+)?(?:[^\s]*)?$%iu'
+# gruber_v2 = regex = '#(?i)\b((?:[a-z][\w-]+:(?:/{1,3}|[a-z0-9%])|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}/)(?:[^\s()<>]+|\(([^\s()<>]+|(\([^\s()<>]+\)))*\))+(?:\(([^\s()<>]+|(\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:'".,<>?«»“”‘’]))#iS'
+
+import string, re
+regex = pat = r'\b(([\w-]+://?|www[.])[^\s()<>]+(?:\([\w\d]+\)|([^%s\s]|/)))'
+regex = pat = pat % re.sub(r'([-\\\]])', r'\\\1', string.punctuation)
+
+corpus_no_html = np.array(list(map(lambda x: re.sub(regex, ' ', x), corpus)))
+
+# ex = corpus[86]
+# re.findall(regex, ex)
+# re.sub(regex, ' ', ex)
+
+
+
 s = ''
-for l in corpus:
-    # if type(l) != str: continue
-    # if l[:4] == 'http': continue
-    s += (l + '\n')
+for l in corpus_no_html: 
+    s += l # (l + '\n') or (l + ' \n ')
 print(s[:280])
 
-# TODO: Remove URLs with regex?
 
 
 # Remove special chars (replace with <OOV>?)
@@ -265,7 +285,7 @@ reduce_lr_callback = tf.keras.callbacks.ReduceLROnPlateau(
 EPOCHS = 500
 
 # TODO: 
-#  Callbacks: learning rate scheduler, early stopping
+#  Callbacks: learning early stopping
 #  learning rate range test (use R package somehow?)
 
 history = model.fit(dataset, epochs=EPOCHS, callbacks=[checkpoint_callback, reduce_lr_callback])
