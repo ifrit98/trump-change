@@ -2,14 +2,9 @@
 
 
 # TODO: Clean data further
-# - remove URLs
-# - remove other special characters
 # - massage formatting to seem more twitter natural
+# - apply postprocessing to string after model prediction?
 
-
-
-# import sys
-# sys.setdefaultencoding("ISO-8859-1")
 
 
 # Ref:  https://www.tensorflow.org/tutorials/text/text_generation
@@ -30,25 +25,26 @@ import time
 
 ENCODING = "ISO-8859-2"
 
-# filepath = '/media/jason/Games/ml-data/trump-change/data/trump-tweets.csv' # 'data/trump-tweets.csv'
-filepath = '/media/jason/Games/ml-data/trump-change/data/trump-tweets-no-retweets.json' #csv'
+basedir = '/media/jason/Games/ml-data/trump-change'
+datadir = os.path.join(basedir, 'data')
+filepath = os.path.join(datadir, 'trump-tweets-no-retweets.json') #csv'
 
-# df = train = pd.read_csv(filepath,  encoding=ENCODING)
 df = train = pd.read_json(filepath)
-corpus = text = train['text'].values # .astype(str) # conversion causing encoding issues?
+corpus = train['text'].values # .astype(str) # conversion causing encoding issues?
 
-# TODO: Remove special characters, URLs, etc to shrink vocab
-# chars_to_rm =  np.array(['\x80', '\x81', '\x82', '\x83', '\x84', '\x85', '\x86', '\x87',
-#        '\x88', '\x89', '\x8a', '\x8b', '\x8c', '\x8d', '\x8e', '\x8f',
-#        '\x90', '\x91', '\x92', '\x93', '\x94', '\x95', '\x96', '\x97',
-#        '\x98', '\x99', '\x9a', '\x9b', '\x9c', '\x9d', '\x9e', '\x9f',
-#        '\xa0', '¡', '¢', '£', '¤', '¥', '¦', '§', '¨', '©', 'ª', '«', '¬',
-#        '\xad', '®', '¯', '°', '±', '²', '³', '´', 'µ', '¶', '·', '¸', '¹',
-#        'º', '»', '¼', '½', '¾', '¿', 'Â', 'Ã', 'Ä', 'Å', 'É', 'Ê', '×',
-#        'Ø', 'Ù', 'Ú', 'Û', 'à', 'á', 'â', 'ã', 'ä', 'å', 'æ', 'ç', 'è',
-#        'é', 'ê', 'ë', 'ì', 'í', 'ï', 'ð', 'ô'])
-
-chars_to_rm = np.array(['、', '。', '々', '《', '「', '」', '【', '】', 'い', 'う', 'え', 'お', 'か',
+# CHARSETS MUST BE TRACKED ACROSS MODELS.  INVALIDATES OLD MODELS IF CHANGED
+# Remove unusual chars to decrease vocab size
+chars_to_rm = np.array(['🇦', '🇧', '🇨', '🇪', '🇫', '🇬', '🇮', '🇯', '🇰', '🇱', '🇲', '🇳', '🇴',
+       '🇵', '🇷', '🇸', '🇹', '🇺', '🇽', '🌊', '🌍', '🌐', '🌪', '🌲', '🍾', '🍿',
+       '🎂', '🎄', '🎆', '🎉', '🎥', '🏁', '🏆', '🏈', '🏻', '🏼', '🏽', '👀', '👇',  '🤳', '🦅',
+       '👈', '👉', '👊', '👍', '👏', '👷', '💜', '💤', '💥', '💪', '💫', '💬', '💯',
+       '💰', '📈', '📉', '📌', '📍', '📱', '📸', '📺', '🔟', '🔥', '🔴', '🔹', '😂',
+       '😆', '😉', '😜', '😝', '😳', '🙄', '🙋', '🙌', '🙏', '🚀', '🚒', '🚚', '🚛',
+       '🚨', '🚫', '🛒', '🛰', '🤔', '🤗', '🤡', '🤣', '🤦', '€', '⃣', '™', '→', '↓', 
+       '↴', '⇒', '⏰', '▪', '▶', '●', '◦', '☀', '★', '☑', '☘', '♀', '♂', '⚖', '⚙', 
+       '⚠', '⚡', '⚽', '⚾', '⛈', '⛰', '⛳', '✅', '✈', '✍', '✓', '✔', '✖', '❌', 
+       '❗', '❣', '❤', '➜', '➡', '⬆', '⬇', '⭐', '、', '。', '々', '《', '「', '」', 
+       '【', '】', 'い', 'う', 'え', 'お', 'か', # New chars to remove above this line 
        'が', 'き', 'ぎ', 'く', 'け', 'こ', 'ご', 'さ', 'し', 'じ', 'す', 'そ', 'た',
        'だ', 'っ', 'つ', 'て', 'で', 'と', 'な', 'に', 'の', 'は', 'へ', 'ま', 'み',
        'め', 'も', 'よ', 'ら', 'り', 'る', 'を', 'ア', 'ゴ', 'サ', 'ジ', 'セ', 'ッ',
@@ -65,32 +61,27 @@ chars_to_rm = np.array(['、', '。', '々', '《', '「', '」', '【', '】', 
        '화', '\u200b', '\u200c', '\u200d', '\u200e', '\u200f', '–', '—',
        '―', '‘', '’', '“', '”', '•', '…', '\u202f', '′', '‼', '\u2060',
        '\u2063', '\u2066', '\u2069', '\U0001f928', '\U0001f92f',
-       '\U0001f973', '\U0001f9d0', '\U0010fc00'])
+       '\U0001f973', '\U0001f9d0', '\U0010fc00',
+       '~', '¡', '£', '«', '®', 'º', '»', '½', 'É', '×', 'á', 'â', 'é',
+       'í', 'ï', 'ñ', 'ó', 'ô', 'ö', 'ø', 'ú', 'ğ', 'ō', 'ɪ', 'ɴ', 'ʀ',
+       'א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ז', 'ח', 'ט', 'י', 'ך', 'כ', 'ל',
+       'ם', 'מ', 'ן', 'נ', 'ס', 'ע', 'צ', 'ק', 'ר', 'ש', 'ת', '،', 'ء',
+       'آ', 'أ', 'ؤ', 'إ', 'ا', 'ب', 'ة', 'ت', 'ث', 'ج', 'ح', 'خ', 'د',
+       'ذ', 'ر', 'ز', 'س', 'ش', 'ص', 'ض', 'ط', 'ظ', 'ع', 'غ', 'ف', 'ق',
+       'ك', 'ل', 'م', 'ن', 'ه', 'و', 'ي', 'ً', 'چ', 'ژ', 'ک', 'گ', 'ی',
+       '۰', '۴', 'ँ', 'ं', 'अ', 'आ', 'इ', 'उ', 'ए', 'औ', 'क', 'ख', 'ग',
+       'घ', 'च', 'छ', 'ज', 'झ', 'ट', 'ठ', 'ड', 'ण', 'त', 'थ', 'द', 'ध',
+       'न', 'प', 'ब', 'भ', 'म', 'य', 'र', 'ल', 'व', 'श', 'ष', 'स', 'ह',
+       '़', 'ा', 'ि', 'ी', 'ु', 'ू', 'े', 'ै', 'ो', '्', '।', 'ᴅ', 'ᴇ',
+       'ᴍ', 'ễ', '️'])
 
-# from string import hexdigits, punctuation
-# chars_to_keep = np.array(list(hexdigits + punctuation))
 
 
-
-# regex = '!"#$%&\'()*+,-./@:;<=>[\\]^_`{|}~'
-# regex = 'https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)'
-# regex = '[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)'
-# regex = '/\b((?:[a-z][\w-]+:(?:\/{1,3}|[a-z0-9%])|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}\/)(?:[^\s()<>]+|\(([^\s()<>]+|(\([^\s()<>]+\)))*\))+(?:\(([^\s()<>]+|(\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:'".,<>?«»“”‘’]))/i'
-# regex = "(?i)\\b((?:[a-z][\\w-]+:(?:\\/{1,3}|[a-z0-9%])|www\\d{0,3}[.]|[a-z0-9.\\-]" \  # Gruber regex for HTML
-#       + "+[.][a-z]{2,4}\\/)(?:[^\\s()<>]+|\\(([^\\s()<>]+|(\\([^\\s()<>]+\\)))*\\))" \
-#       + "+(?:\\(([^\\s()<>]+|(\\([^\\s()<>]+\\)))*\\)|[^\\s`!()\\[\\]{};:'\".,<>?«»“”‘’]))"
-# regex = '%^(?:(?:https?|ftp)://)(?:\S+(?::\S*)?@|\d{1,3}(?:\.\d{1,3}){3}|(?:(?:[a-z\d\x{00a1}-\x{ffff}]+-?)*[a-z\d\x{00a1}-\x{ffff}]+)(?:\.(?:[a-z\d\x{00a1}-\x{ffff}]+-?)*[a-z\d\x{00a1}-\x{ffff}]+)*(?:\.[a-z\x{00a1}-\x{ffff}]{2,6}))(?::\d+)?(?:[^\s]*)?$%iu'
-# gruber_v2 = regex = '#(?i)\b((?:[a-z][\w-]+:(?:/{1,3}|[a-z0-9%])|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}/)(?:[^\s()<>]+|\(([^\s()<>]+|(\([^\s()<>]+\)))*\))+(?:\(([^\s()<>]+|(\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:'".,<>?«»“”‘’]))#iS'
-
-import string, re
+import string, re # gruber html regex
 regex = pat = r'\b(([\w-]+://?|www[.])[^\s()<>]+(?:\([\w\d]+\)|([^%s\s]|/)))'
 regex = pat = pat % re.sub(r'([-\\\]])', r'\\\1', string.punctuation)
 
 corpus_no_html = np.array(list(map(lambda x: re.sub(regex, ' ', x), corpus)))
-
-# ex = corpus[86]
-# re.findall(regex, ex)
-# re.sub(regex, ' ', ex)
 
 
 
@@ -101,7 +92,7 @@ print(s[:280])
 
 
 
-# Remove special chars (replace with <OOV>?)
+# Remove special chars
 s_clean = ''
 for c in s:
     if c not in chars_to_rm:
@@ -110,6 +101,7 @@ print(s_clean[:280])
 
 
 text = s_clean
+
 
 # length of text is the number of characters in it
 print ('Length of text: {} characters'.format(len(text)))
@@ -121,6 +113,7 @@ print(text[:250])
 # The unique characters in the file
 vocab = sorted(set(text))
 print ('{} unique characters'.format(len(vocab)))
+
 
 
 # Creating a mapping from unique characters to indices
@@ -137,8 +130,10 @@ for char,_ in zip(char2idx, range(20)):
 print('  ...\n}')
 
 
+
 # Show how the first 13 characters from the text are mapped to integers
 print ('{} ---- characters mapped to int ---- > {}'.format(repr(text[:13]), text_as_int[:13]))
+
 
 # The maximum length sentence we want for a single input in characters
 seq_length = 144 # max([len(x) for x in corpus])
@@ -146,6 +141,7 @@ examples_per_epoch = len(text) // (seq_length + 1)
 
 # Create training examples / targets
 char_dataset = tf.data.Dataset.from_tensor_slices(text_as_int)
+
 
 for i in char_dataset.take(5):
     print(idx2char[i.numpy()])
@@ -163,6 +159,7 @@ def split_input_target(chunk):
 
 
 dataset = sequences.map(split_input_target)
+
 
 # Print the first examples input and target values
 for input_example, target_example in  dataset.take(1):
@@ -189,7 +186,8 @@ dataset = dataset.shuffle(BUFFER_SIZE).batch(BATCH_SIZE, drop_remainder=True)
 print(dataset)
 
 
-# Build model
+
+## Build model
 
 # Length of the vocabulary in chars
 vocab_size = len(vocab)
@@ -277,7 +275,7 @@ checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
     save_weights_only=True)
 
 reduce_lr_callback = tf.keras.callbacks.ReduceLROnPlateau(
-    monitor='loss', factor=0.1, patience=10, verbose=0, mode='auto',
+    monitor='loss', factor=0.1, patience=5, verbose=0, mode='auto',
     min_delta=0.0005, cooldown=0, min_lr=0
 )
 
@@ -290,11 +288,19 @@ EPOCHS = 500
 
 history = model.fit(dataset, epochs=EPOCHS, callbacks=[checkpoint_callback, reduce_lr_callback])
 
+
+
 # Save history object, can't use pickle: .Rlock object error
 import pickle
-hist_file = os.getcwd() + '/history/history-{}'.format(EPOCHS) + 'x2'
+from datetime import datetime
+ 
+time = str(datetime.now()).replace(' ', '_')
+
+hist_file = os.getcwd() + '/history/history-{}_'.format(EPOCHS) + time
 with open(hist_file, 'wb') as f:
     pickle.dump(dict(history.history), f)
+
+
 
 # Plot loss and accuracy from hist
 import matplotlib.pyplot as plt
@@ -308,7 +314,7 @@ plt.figure()
 plt.plot(epochs, loss, 'b', label='Training Loss')
 plt.title('Training loss')
 plt.legend()
-plt.savefig('training_loss.png')
+plt.savefig('training_loss_{}_.png'.format(EPOCHS) + time)
 plt.show()
 
 # If you want preds on CPU only
@@ -324,14 +330,16 @@ if GENERATE_ON_CPU:
     print(device_lib.list_local_devices())
 
 
-checkpoint_dir = '/media/jason/Games/ml-data/trump-change/trump_training_checkpoints/no_retweets'
+checkpoint_dir = os.path.join(basedir, 'trump_training_checkpoints/archive/no_retweets')
 
 tf.train.latest_checkpoint(checkpoint_dir) # './trump_training_checkpoints'
 
 # Reload model
 
 model = build_model(vocab_size, embedding_dim, rnn_units, batch_size=1)
+
 model.load_weights(tf.train.latest_checkpoint(checkpoint_dir))
+
 model.build(tf.TensorShape([1, None]))
 
 model.summary()
@@ -374,17 +382,24 @@ def generate_text(model, start_string, num_generate=256):
   return (start_string + ''.join(text_generated))
 
 
-no_generate = 1000
+no_generate = 100
 
 tweets = [
     generate_text(model, start_string=u"China ") + '\n' for _ in range(no_generate)
 ]
 
+print(tweets)
 
+time = str(datetime.now()).replace(' ', '_')
 
-# TODO: Dump generated text to csv or txt file
-outfile = 'trump-tweets-1000.txt'
+# Dump generated text to csv or txt file
+outfile = os.path.join(
+    basedir, 
+    'generated/trump-tweets-{}-{}_epochs'.format(no_generate, EPOCHS) + time + '.txt')
+
 import csv
 with open(outfile, 'w') as f:
     writer = csv.writer(f, dialect='unix')
     writer.writerows([tweets])
+
+print("Done generating!")
