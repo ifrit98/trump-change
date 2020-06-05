@@ -10,11 +10,9 @@
 
 # Ref:  https://www.tensorflow.org/tutorials/text/text_generation
 import tensorflow as tf
-from tensorflow.keras.preprocessing.text import Tokenizer
-from tensorflow.keras.preprocessing.sequence import pad_sequences
 
-from tensorflow.keras.layers import Embedding, LSTM, Dense, Dropout, Bidirectional
-from tensorflow.keras.models import Sequential
+# from tensorflow.keras.layers import Embedding, LSTM, Dense, Dropout, Bidirectional
+# from tensorflow.keras.models import Sequential
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras import regularizers
 
@@ -26,12 +24,15 @@ import time
 
 ENCODING = "ISO-8859-2"
 
-basedir = '/media/jason/Games/ml-data/trump-change'
+# basedir = '/media/jason/Games/ml-data/trump-change'
+basedir = '/home/jason/Documents'
 datadir = os.path.join(basedir, 'data')
-filepath = os.path.join(datadir, 'trump-tweets-no-retweets.json') #csv'
+filepath = os.path.join(datadir, 'trump-tweets-sm.csv')#'trump-tweets-no-retweets.json') #csv'
 
-df = train = pd.read_json(filepath)
+# df = train = pd.read_json(filepath, encoding=ENCODING)
+df = train = pd.read_csv(filepath)
 corpus = train['text'].values # .astype(str) # conversion causing encoding issues?
+corpus = corpus[:100]
 
 # CHARSETS MUST BE TRACKED ACROSS MODELS.  INVALIDATES OLD MODELS IF CHANGED
 # Remove unusual chars to decrease vocab size
@@ -174,13 +175,13 @@ for i, (input_idx, target_idx) in enumerate(zip(input_example[:5], target_exampl
 
 
 # Batch size
-BATCH_SIZE = 136 # close to a divisor of examples_per_epoch
+BATCH_SIZE = 32 # close to a divisor of examples_per_epoch
 
 # Buffer size to shuffle the dataset
 # (TF data is designed to work with possibly infinite sequences,
 # so it doesn't attempt to shuffle the entire sequence in memory. Instead,
 # it maintains a buffer in which it shuffles elements).
-BUFFER_SIZE = 10000
+BUFFER_SIZE = 100
 
 dataset = dataset.shuffle(BUFFER_SIZE).batch(BATCH_SIZE, drop_remainder=True)
 
@@ -269,6 +270,10 @@ with open(params_file, 'r') as f:
     min_lr = float(params[0]) 
     max_lr = float(params[1]) 
 
+
+min_lr = 0.00001
+max_lr = 0.003
+
 optimizer = tf.keras.optimizers.Adam(learning_rate=max_lr)
 
 
@@ -293,13 +298,18 @@ reduce_lr_callback = tf.keras.callbacks.ReduceLROnPlateau(
 )
 
 
-EPOCHS = 500
+EPOCHS = 2
 
 # TODO: 
 #  Callbacks: learning early stopping
 #  learning rate range test (use R package somehow?)
 
 history = model.fit(dataset, epochs=EPOCHS, callbacks=[checkpoint_callback, reduce_lr_callback])
+
+
+# Save final model weights for freezing and exporting later
+save_model_path = os.path.join(basedir, 'savedmodels', 'current')
+model.save_weights(save_model_path)
 
 
 
