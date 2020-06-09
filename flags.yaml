@@ -1,7 +1,7 @@
 --- 
  epochs: 500
  rnn_units: 412
- embedding_dim: 208
+ embedding_dim: 206
  batch_size: 108
  min_lr: 0.00006
  max_lr: 0.004

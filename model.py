@@ -15,6 +15,7 @@ FLAGS = yaml.load(stream)
 ## Build model
 
 BATCH_SIZE = FLAGS['batch_size'] #108
+EPOCHS = FLAGS['epochs']
 
 # Length of the vocabulary in chars 
 # TODO: ensure vocab is in namespace or find way to get access

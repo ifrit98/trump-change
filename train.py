@@ -71,7 +71,6 @@ save_model_path = os.path.join(basedir, 'savedmodels', 'final_{}'.format(END_TIM
 model.save_weights(save_model_path)
 
 
-
 # Save history object, can't use pickle: .Rlock object error
 import pickle
 

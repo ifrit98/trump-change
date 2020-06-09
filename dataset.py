@@ -18,16 +18,16 @@ FLAGS = yaml.load(stream)
 
 ENCODING = FLAGS['encoding'] #"ISO-8859-2"
 
-# basedir = '/media/jason/Games/ml-data/trump-change'
-basedir = '/home/jason/Documents'
+# basedir = '/home/jason/Documents'
+basedir = '/media/jason/freya/ml-data/trump-change'
 datadir = os.path.join(basedir, 'data')
-filepath = os.path.join(datadir, 'trump-tweets-sm.csv') #'trump-tweets-no-retweets.json') #csv'
+filepath = os.path.join(datadir, 'trump-tweets-no-retweets.json') #csv'
 
 
-# df = train = pd.read_json(filepath, encoding=ENCODING)
-df = train = pd.read_csv(filepath)
+df = train = pd.read_json(filepath)#, encoding=ENCODING)
+# df = train = pd.read_csv(filepath)
 corpus = train['text'].values # .astype(str) # conversion causing encoding issues?
-# corpus = corpus[:100]
+corpus = corpus[:100]
 
 # CHARSETS MUST BE TRACKED ACROSS MODELS.  INVALIDATES OLD MODELS IF CHANGED
 # Remove unusual chars to decrease vocab size
@@ -185,3 +185,5 @@ print(dataset)
 
 # Write vocab file out
 np.save(os.path.join('data', FLAGS['vocab_file']), vocab)
+
+# Save metadata to yaml/json?
