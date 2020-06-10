@@ -69,9 +69,9 @@ END_TIME = str(end).replace(' ', '_')[:-7]
 training_time = str(end - start)
 print('Training took {} hour/min/sec'.format(training_time.split('.')[0]))
 
-# # Save final model weights for freezing and exporting later
-# save_model_path = os.path.join(basedir, 'savedmodels', 'final_{}'.format(END_TIME))
-# model.save_weights(save_model_path)
+# Save final model weights for freezing and exporting later
+save_model_path = os.path.join(basedir, 'savedmodels', 'final_{}'.format(END_TIME))
+model.save_weights(save_model_path)
 
 
 # Save history object, can't use pickle: .Rlock object error
