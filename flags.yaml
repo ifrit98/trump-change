@@ -1,14 +1,15 @@
 --- 
- epochs: 2
+ epochs: 350
  rnn_units: 412
  embedding_dim: 206
  batch_size: 108
- min_lr: 0.00006
- max_lr: 0.004
- min_delta: 0.0005 # for lr_scheduler
- lr_factor: 0.2
+ min_lr: 0.0004
+ max_lr: 0.004291934
+ min_delta: 0.0002 # for lr_scheduler
+ lr_factor: 0.5
  patience: 5
  vocab_file: vocab.npy
+ keep_emojis: True
  data_file: trump-tweets-no-retweets-latest.json
  checkpoint_dir: trump_training_checkpoints/current
  buffer_size: 100
@@ -16,3 +17,4 @@
  encoding: ISO-8859-2
  base_dir: /home/jason/internal/trump-change
  runs_dir: /home/jason/freya/runs
+

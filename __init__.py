@@ -4,6 +4,7 @@ import yaml
 # Load flags.yaml
 stream = open("flags.yaml", 'r')
 FLAGS = yaml.load(stream)
+print("FLAGS:")
 for key, value in FLAGS.items():
     print (key + " : " + str(value))
 
