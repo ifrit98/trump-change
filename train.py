@@ -57,11 +57,18 @@ reduce_lr_callback = tf.keras.callbacks.ReduceLROnPlateau(
     min_delta=FLAGS['min_delta'], cooldown=0, min_lr=FLAGS['min_lr']
 )
 
+early_stop_callback = tf.keras.callbacks.EarlyStopping(
+    monitor = 'loss', patience = 10
+)
+
 EPOCHS = FLAGS['epochs']
 
 
 history = model.fit(
-    dataset, epochs=EPOCHS, callbacks=[checkpoint_callback, reduce_lr_callback])
+    dataset, 
+    epochs=EPOCHS, 
+    callbacks=[checkpoint_callback, reduce_lr_callback, early_stop_callback])
+
 
 end = datetime.now()
 END_TIME = str(end).replace(' ', '_')[:-7]
