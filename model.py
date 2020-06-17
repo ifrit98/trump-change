@@ -14,19 +14,19 @@ FLAGS = yaml.load(stream)
 
 ## Build model
 
-BATCH_SIZE = FLAGS['batch_size'] #108
+BATCH_SIZE = FLAGS['batch_size']
 EPOCHS = FLAGS['epochs']
 
 # Length of the vocabulary in chars 
 # TODO: ensure vocab is in namespace or find way to get access
 vocab = load(os.path.join('data', FLAGS['vocab_file']))
-vocab_size = len(vocab) # FLAGS['vocab_size']  
+vocab_size = len(vocab) 
 
 # The embedding dimension
-embedding_dim = FLAGS['embedding_dim'] #206 # divisor of examples_per_epoch
+embedding_dim = FLAGS['embedding_dim']
 
 # Number of RNN units
-rnn_units = FLAGS['rnn_units'] #412 # divisor **
+rnn_units = FLAGS['rnn_units']
 
 
 def build_model(vocab_size, embedding_dim, rnn_units, batch_size):
@@ -65,8 +65,8 @@ def loss_fn(labels, logits):
     return tf.keras.losses.sparse_categorical_crossentropy(labels, logits, from_logits=True)
 
 
-min_lr = FLAGS['min_lr'] # 0.00001
-max_lr = FLAGS['max_lr'] # 0.003
+min_lr = FLAGS['min_lr'] 
+max_lr = FLAGS['max_lr']
 
 optimizer = tf.keras.optimizers.Adam(learning_rate=max_lr)
 

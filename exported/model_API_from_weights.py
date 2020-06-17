@@ -28,7 +28,7 @@ class TrumpChange(tf.Module):
         model = build_model(self.vocab_size, embedding_dim, rnn_units, batch_size=1)
 
         run_dir = run_dir or 'trump_training_checkpoints/current'
-        checkpoint_dir = os.path.join(basedir, run_dir)
+        checkpoint_dir = os.path.join(os.getcwd(), run_dir)
         
         model.load_weights(tf.train.latest_checkpoint(checkpoint_dir))
         model.build(tf.TensorShape([1, None]))

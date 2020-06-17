@@ -27,9 +27,9 @@ char2idx = {u:i for i, u in enumerate(vocab)}
 idx2char = array(vocab)
 
 run_dir = 'trump_training_checkpoints/current'
-checkpoint_dir = os.path.join(basedir, run_dir) #'trump_training_checkpoints/archive/no_retweets')
+checkpoint_dir = os.path.join(os.getcwd(), run_dir)
 
-tf.train.latest_checkpoint(checkpoint_dir) # './trump_training_checkpoints'
+tf.train.latest_checkpoint(checkpoint_dir)
 
 # Reload model
 
@@ -108,6 +108,6 @@ tc.set_num_generate.get_concrete_function()
 tf.saved_model.save(tc, 'exported') 
 
 
-if True:
+if False:
     reloaded = tf.saved_model.load('exported')
     print(reloaded())

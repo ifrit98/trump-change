@@ -11,17 +11,6 @@ START_TIME = str(start).replace(' ', '_')[:-7]
 
 from __init__ import *
 
-# # Load flags.yaml
-# stream = open("flags.yaml", 'r')
-# FLAGS = yaml.load(stream)
-# for key, value in FLAGS.items():
-#     print (key + " : " + str(value))
-
-# basedir = FLAGS['base_dir']
-# datafile = FLAGS['data_file']
-# datadir = os.path.join(basedir, 'data')
-# filepath = os.path.join(datadir, datafile) #'trump-tweets-no-retweets.json'
-
 
 
 ## Prepare and import dataset
@@ -43,11 +32,36 @@ checkpoint_dir = FLAGS['checkpoint_dir'] # 'trump_training_checkpoints/current'
 checkpoint_prefix = os.path.join(checkpoint_dir, "ckpt_{epoch}")
 
 
-# TODO: 
-#  Callbacks: learning early stopping
-#  Automatic learning rate range test (use R package somehow?)
 
-# Callbacks
+## Callbacks
+# TODO: reach into model or optimizer to grab current lr and compare with `min_lr` (via self?)
+from math import floor
+def exp_decay(epoch,
+              logs=None,
+              init_lr=FLAGS['max_lr'],
+              min_lr=FLAGS['min_lr'],
+              decay_steps=1, #FLAGS['steps_per_epoch'], 
+              decay_epochs=FLAGS['decay_epochs'], 
+              decay_rate=FLAGS['decay_rate'], 
+              batch_size=FLAGS['batch_size'],
+              staircase=True):
+    # print("Logs:", logs)
+    p = epoch / decay_steps #(decay_steps * decay_epochs * batch_size)
+    # lr = logs['learning_rate']
+    if staircase:
+        p = floor(p)
+    return init_lr * (decay_rate ** p)
+
+# list(map(lambda x: exp_decay(x), range(50)))
+
+
+def linear_decay(epoch):
+    return 
+
+lr_schedule_callback = tf.keras.callbacks.LambdaCallback(on_epoch_end=exp_decay)
+# lr_schedule_callback = tf.keras.callbacks.LearningRateScheduler(exp_decay, verbose=1)
+
+
 checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
     filepath=checkpoint_prefix,
     save_weights_only=True)
@@ -67,7 +81,7 @@ EPOCHS = FLAGS['epochs']
 history = model.fit(
     dataset, 
     epochs=EPOCHS, 
-    callbacks=[checkpoint_callback, reduce_lr_callback, early_stop_callback])
+    callbacks=[checkpoint_callback, reduce_lr_callback])
 
 
 end = datetime.now()
@@ -80,27 +94,3 @@ print('Training took {} hour/min/sec'.format(training_time.split('.')[0]))
 save_model_path = os.path.join(basedir, 'savedmodels', 'final_{}'.format(END_TIME))
 model.save_weights(save_model_path)
 
-
-# Save history object, can't use pickle: .Rlock object error
-# import pickle
-
-# hist_file = os.getcwd() + '/history/history-{}_'.format(EPOCHS) + END_TIME
-# with open(hist_file, 'wb') as f:
-#     pickle.dump(dict(history.history), f)
-
-
-
-# # Plot loss and accuracy from hist
-# import matplotlib.pyplot as plt
-
-# loss = history.history['loss']
-
-# epochs = range(len(loss))
-
-# plt.figure()
-
-# plt.plot(epochs, loss, 'b', label='Training Loss')
-# plt.title('Training loss')
-# plt.legend()
-# plt.savefig('plots/training_loss_{}_'.format(EPOCHS) + END_TIME + '.pdf')
-# plt.show()

@@ -21,7 +21,7 @@ from model import build_model
 from dataset import vocab, char2idx, idx2char
 
 
-checkpoint_dir = os.path.join(basedir, 'trump_training_checkpoints/current')
+checkpoint_dir = os.path.join(os.getcwd(), 'trump_training_checkpoints/current')
 
 tf.train.latest_checkpoint(checkpoint_dir) # './trump_training_checkpoints'
 
@@ -36,7 +36,7 @@ model.summary()
  
 # Prediction
 
-def generate_text(model, start_string, num_generate=256):
+def generate_text(model, start_string, num_generate=256, temp=1.0):
   # Evaluation step (generating text using the learned model)
 
   # Converting our start string to numbers (vectorizing)
@@ -49,7 +49,7 @@ def generate_text(model, start_string, num_generate=256):
   # Low temperatures results in more predictable text.
   # Higher temperatures results in more surprising text.
   # Experiment to find the best setting.
-  temperature = 1.0
+  temperature = temp
 
   # Here batch size == 1
   model.reset_states()
@@ -74,16 +74,17 @@ def generate_text(model, start_string, num_generate=256):
 no_generate = 10
 
 tweets = [
-    generate_text(model, start_string=u"China ") for _ in range(no_generate)
+    generate_text(model, start_string="China ") for _ in range(no_generate)
 ]
 
 print(tweets)
+
 from datetime import datetime
-time = str(datetime.now()).replace(' ', '_')
+time = str(datetime.now()).replace(' ', '_').replace(':', '_')
 
 # Dump generated text to csv or txt file
 outfile = os.path.join(
-    basedir, 
+    os.getcwd(), 
     'generated/trump-tweets-{}-{}_epochs_'.format(no_generate, FLAGS['epochs']) + time[:-7] + '.txt')
 
 import csv

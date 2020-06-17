@@ -1,18 +1,28 @@
 --- 
+ # Model
  epochs: 350
  rnn_units: 412
  embedding_dim: 206
  batch_size: 108
+ vocab_file: vocab.npy
+
+ # Optimizer
  min_lr: 0.0004
  max_lr: 0.004291934
- min_delta: 0.0002 # for lr_scheduler
+ min_delta: 0.001 # for lr_scheduler
  lr_factor: 0.5
  patience: 5
- vocab_file: vocab.npy
- keep_emojis: True
+ steps_per_epoch: 130
+ decay_epochs: 5
+ decay_rate: 0.96
+
+ # Dataset
+ keep_emojis: False
  data_file: trump-tweets-no-retweets-latest.json
- checkpoint_dir: trump_training_checkpoints/current
  buffer_size: 100
+
+ # Misc
+ checkpoint_dir: trump_training_checkpoints/current
  verbose: True
  encoding: ISO-8859-2
  base_dir: /home/jason/internal/trump-change

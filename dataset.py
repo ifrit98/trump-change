@@ -222,4 +222,7 @@ print(dataset)
 # Write vocab file out
 np.save(os.path.join('data', FLAGS['vocab_file']), vocab)
 
+with open('vocab-size.txt', 'w') as f:
+    f.write(str(len(vocab)))
+
 # Save metadata to yaml/json?
