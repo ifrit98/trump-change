@@ -7,7 +7,7 @@
  vocab_file: vocab.npy
 
  # Optimizer
- min_lr: 0.0004
+ min_lr: 0.0001
  max_lr: 0.004291934
  min_delta: 0.001 # for lr_scheduler
  lr_factor: 0.5
