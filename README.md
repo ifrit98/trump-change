@@ -1,7 +1,9 @@
 # Trump Change
 [![Build Status](https://travis-ci.org/joemccann/dillinger.svg?branch=master)](https://travis-ci.org/joemccann/dillinger)
 
-`trump-change` is a character-level generative text model wrapped in a customized data science workflow written in `python` using `tensorflow`.  This project contains all the necessary source code and data requred to train your own models, run hyperparameter tuning experiments, freeze models off in Tensorflow's `saved_model` format, and access pretrained models from a `python` API.
+`trump-change` is a character-level generative text model wrapped in a customized data science workflow written in `python` using `tensorflow` and the `pyruns` experiment manager.  This project contains all the necessary source code and data requred to train your own models, run hyperparameter tuning experiments, freeze models off in Tensorflow's `saved_model` format, and access pretrained models from a `python` API.
+
+Note: You do not need `pyruns` to run any of this code.  `pyruns` is a simple port of Rstudio's `tfruns` for `python` that I wrote and can be found [here](https://github.com/ifrit98/pyruns).  It helps manage your expierments by creating a micro-hermetic build of a data science project in a unique run directory, making for easy evaluations and comparisons.
 
  To start generating with a pretrained model with an automated script, simply clone the repo and run `generate.py`:
  ```{bash}
