@@ -1,3 +1,4 @@
+#! /usr/bin/python3
 
 # If you want preds on CPU only
 GENERATE_ON_CPU = True
@@ -66,7 +67,6 @@ class TrumpChange(tf.Module):
         # Low temperatures results in more predictable text.
         # Higher temperatures results in more surprising text.
         # Experiment to find the best setting.
-        temperature = self.temperature
 
         # Here batch size == 1
         self.model.reset_states()
@@ -76,7 +76,7 @@ class TrumpChange(tf.Module):
             predictions = tf.squeeze(predictions, 0)
 
             # using a categorical distribution to predict the character returned by the model
-            predictions = predictions / temperature
+            predictions = predictions / self.temperature
             predicted_id = tf.random.categorical(predictions, num_samples=1)[-1,0].numpy()
 
             # We pass the predicted character as the next input to the model
@@ -97,9 +97,31 @@ class TrumpChange(tf.Module):
         self.temperature = float(new_temp)
 
 
-if False:
-    tc = tc_model = TrumpChange()
-    # tc.set_num_generate(25)
-    # tc.set_temperature(2)
+
+
+if __name__ == "__main__":
+    import argparse
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-w", "--weights_file",  help="Filepath to model weights file.", type=str, default="savedmodels")
+    parser.add_argument("-n", "--num_generate",  help="Set the number of characters to generate per tweet.", type=int, default=280)
+    parser.add_argument("-c", "--conditioning", help="Set the conditioning string to use as input to the model", type=str, default="China")
+    parser.add_argument("-v", "--vocab_path",    help="Path to vocabulary file [.npy array]", type=str, default="data/vocab.npy")
+    parser.add_argument("-t", "--temperature",   help="Set the temperature of the annealer ", type=float, default=1.0)
+    args = parser.parse_args()
+    
+    print("\n", args, "\n")
+
+    tc = TrumpChange(
+        checkpoint_dir=args.weights_file,
+        num_generate=args.num_generate,
+        conditioning_string=args.conditioning,  
+        vocab_path=args.vocab_path,
+        temperature=args.temperature
+    )
+    tc.set_num_generate(25)
+    tc.set_temperature(2)
     tc.set_conditioning_str('Money ')
     tc()
+
+
