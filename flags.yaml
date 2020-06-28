@@ -23,7 +23,7 @@
 
  # Misc
  checkpoint_dir: trump_training_checkpoints/current
- verbose: True
+ verbose: False
  encoding: ISO-8859-2
  base_dir: /home/jason/internal/trump-change
  runs_dir: /home/jason/freya/runs

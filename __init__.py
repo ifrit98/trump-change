@@ -4,9 +4,11 @@ import yaml
 # Load flags.yaml
 stream = open("flags.yaml", 'r')
 FLAGS = yaml.load(stream)
-print("FLAGS:")
-for key, value in FLAGS.items():
-    print (key + " : " + str(value))
+
+if FLAGS['verbose']:
+    print("FLAGS:")
+    for key, value in FLAGS.items():
+        print (key + " : " + str(value))
 
 basedir = FLAGS['base_dir']
 datafile = FLAGS['data_file']

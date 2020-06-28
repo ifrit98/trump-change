@@ -10,7 +10,7 @@ if GENERATE_ON_CPU:
 
     # Check to see if GPU is not visible
     from tensorflow.python.client import device_lib
-    print(device_lib.list_local_devices())
+    # print(device_lib.list_local_devices())
 
 
 import tensorflow as tf
@@ -103,25 +103,60 @@ if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("-w", "--weights_file",  help="Filepath to model weights file.", type=str, default="savedmodels")
-    parser.add_argument("-n", "--num_generate",  help="Set the number of characters to generate per tweet.", type=int, default=280)
-    parser.add_argument("-c", "--conditioning", help="Set the conditioning string to use as input to the model", type=str, default="China")
-    parser.add_argument("-v", "--vocab_path",    help="Path to vocabulary file [.npy array]", type=str, default="data/vocab.npy")
-    parser.add_argument("-t", "--temperature",   help="Set the temperature of the annealer ", type=float, default=1.0)
+    parser.add_argument("-w", "--checkpoint",   
+                        help="Filepath to model checkpoint.", 
+                        type=str, default="trump_training_checkpoints")
+    parser.add_argument("-n", "--num_generate", 
+                        help="Set the number of characters to generate per tweet.", 
+                        type=int, default=280) # defalt twitter lengthc cap as of 5/2020
+    parser.add_argument("-c", "--conditioning", 
+                        help="Set the conditioning string to use as input to the model.", 
+                        type=str, default="China")
+    parser.add_argument("-v", "--vocab_path",
+                        help="Path to vocabulary file [.npy array].", 
+                        type=str, default="data/vocab.npy")
+    parser.add_argument("-t", "--temperature",
+                        help="Set the temperature of the annealer during prediction.", 
+                        type=float, default=0.9)
     args = parser.parse_args()
     
-    print("\n", args, "\n")
 
+    print("\nLoading model weights...")
     tc = TrumpChange(
-        checkpoint_dir=args.weights_file,
+        checkpoint_dir=args.checkpoint,
         num_generate=args.num_generate,
         conditioning_string=args.conditioning,  
         vocab_path=args.vocab_path,
         temperature=args.temperature
     )
-    tc.set_num_generate(25)
-    tc.set_temperature(2)
-    tc.set_conditioning_str('Money ')
-    tc()
 
+    print("\nSetting initial params...")
+    print(vars(args))
+    tc.set_num_generate(args.num_generate)
+    tc.set_temperature(args.temperature)
+    tc.set_conditioning_str(args.conditioning)
+
+    done = False
+    while not done:
+        n = int(input("\nHow many strings to generate?\n"))
+        for _ in range(n):
+            print(tc(), "\n")
+
+        b = input("Do you wish to update parameters? (y/n)\n")
+
+        if b.lower() in ["yes", "y"]:
+            c = input("\nEnter conditioning string:\n")
+            tc.set_conditioning_str(c)
+
+            t = input("\nEnter temperature:\n")
+            tc.set_temperature(t)
+
+            n = input("\nEnter number of characters to generate per tweet:\n")
+            tc.set_num_generate(n)
+
+        else:
+            x = input("\nDo you wish to generate more tweets? (y/n)\n")
+            if x not in ['yes', 'y']:
+                done = True
+                print("Exiting...")
 
